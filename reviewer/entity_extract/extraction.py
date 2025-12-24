@@ -44,7 +44,7 @@ def extract(
     max_char_buffer: int = 1000,
     temperature: float | None = None,
     fence_output: bool | None = None,
-    use_schema_constraints: bool = True,
+    use_schema_constraints: bool = False,  # 默认不使用 schema 约束
     batch_length: int = 10,
     max_workers: int = 10,
     additional_context: str | None = None,

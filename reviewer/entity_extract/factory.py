@@ -201,7 +201,7 @@ def create_model_from_id(
 def _create_model_with_schema(
     config: ModelConfig,
     examples: typing.Sequence[typing.Any] | None = None,
-    use_schema_constraints: bool = True,
+    use_schema_constraints: bool = False,  # 默认不使用 schema 约束
     fence_output: bool | None = None,
 ) -> base_model.BaseLanguageModel:
   """Internal helper to create a model with optional schema constraints.

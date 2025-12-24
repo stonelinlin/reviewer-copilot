@@ -10,6 +10,8 @@ sys.path.insert(0, project_root)
 import PyPDF2
 import html
 import json
+import re  # 用于文本清理
+import unicodedata  # 用于 Unicode 规范化
 from reviewer.entity_extract import data
 from reviewer.entity_extract.providers.openai import OpenAILanguageModel
 from reviewer.entity_extract.core.tokenizer import UnicodeTokenizer
@@ -28,7 +30,18 @@ with open(input_file, 'rb') as f:
             text_parts.append(page_text)
     original_text = '\n'.join(text_parts)
 
-print(f"文件读取成功，共 {len(original_text)} 个字符\n")
+# 清理控制字符（\x00-\x1f 和 \x7f-\x9f），保留换行符(\n)和制表符(\t)
+print("正在清理文本中的控制字符...")
+original_text = re.sub(r'[\x00-\x08\x0b-\x0c\x0e-\x1f\x7f-\x9f]', ' ', original_text)
+# 清理多余的空格
+original_text = re.sub(r' +', ' ', original_text)
+
+# Unicode 规范化：将兼容汉字转换为标准汉字
+# NFKC: Normalization Form KC (Compatibility Composition)
+print("正在进行 Unicode 规范化（将兼容汉字转为标准汉字）...")
+original_text = unicodedata.normalize('NFKC', original_text)
+
+print(f"文件读取成功，清理后共 {len(original_text)} 个字符\n")
 
 doc = data.Document(text=original_text, document_id=input_file)
 
