@@ -439,6 +439,74 @@ class Resolver(AbstractResolver):
             )
           continue
 
+        # Handle None values - skip extractions with None
+        if extraction_value is None:
+          logging.debug(
+              "Skipping extraction with None value for %s in group %d",
+              extraction_class,
+              group_index,
+          )
+          continue
+
+        # Handle list values - create multiple extractions
+        if isinstance(extraction_value, list):
+          logging.debug(
+              "Processing list value for %s with %d items in group %d",
+              extraction_class,
+              len(extraction_value),
+              group_index,
+          )
+          # Process each item in the list as a separate extraction
+          for item in extraction_value:
+            if item is None:
+              logging.debug("Skipping None item in list for %s", extraction_class)
+              continue
+            
+            if not isinstance(item, (str, int, float)):
+              logging.warning(
+                  "Skipping non-scalar item in list for %s: %s",
+                  extraction_class,
+                  type(item),
+              )
+              continue
+            
+            item_text = str(item) if not isinstance(item, str) else item
+            
+            if not item_text.strip():
+              logging.debug("Skipping empty item in list for %s", extraction_class)
+              continue
+            
+            # Get index and attributes for this extraction
+            if index_suffix:
+              index_key = extraction_class + index_suffix
+              item_index = group.get(index_key, None)
+              if item_index is None:
+                logging.debug(
+                    "No index value for %s. Skipping extraction.", extraction_class
+                )
+                continue
+            else:
+              extraction_index += 1
+              item_index = extraction_index
+            
+            item_attributes = None
+            if attributes_suffix:
+              attributes_key = extraction_class + attributes_suffix
+              item_attributes = group.get(attributes_key, None)
+            
+            processed_extractions.append(
+                data.Extraction(
+                    extraction_class=extraction_class,
+                    extraction_text=item_text,
+                    extraction_index=item_index,
+                    group_index=group_index,
+                    attributes=item_attributes,
+                )
+            )
+          
+          # Skip to next field after processing list
+          continue
+
         if not isinstance(extraction_value, (str, int, float)):
           logging.error(
               "Extraction text must be a string, integer, or float. Found: %s",
@@ -450,6 +518,16 @@ class Resolver(AbstractResolver):
 
         if not isinstance(extraction_value, str):
           extraction_value = str(extraction_value)
+
+        # Skip empty strings after conversion
+        if not extraction_value.strip():
+          logging.debug(
+              "Skipping empty extraction for %s in group %d",
+              extraction_class,
+              group_index,
+          )
+          continue
+
 
         if index_suffix:
           index_key = extraction_class + index_suffix

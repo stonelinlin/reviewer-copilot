@@ -227,7 +227,7 @@ class RegexTokenizer(Tokenizer):
     return tokenized
 
 
-# Default tokenizer instance for backward compatibility
+# Default tokenizer instance (will be overridden to UnicodeTokenizer below)
 _DEFAULT_TOKENIZER = RegexTokenizer()
 
 
@@ -645,3 +645,9 @@ def find_sentence_range(
     i += 1
 
   return TokenInterval(start_index=start_token_index, end_index=len(tokens))
+
+
+# Override default tokenizer to UnicodeTokenizer for better CJK support
+# This is done here after UnicodeTokenizer is defined
+_DEFAULT_TOKENIZER = UnicodeTokenizer()
+
