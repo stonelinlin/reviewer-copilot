@@ -19,7 +19,6 @@ import reviewer.entity_extract as lx
 from reviewer.entity_extract import data
 
 from .factory import ProviderFactory
-from .providers.base import GenerationConfig
 
 
 class EnhancedExtractor:
@@ -147,7 +146,7 @@ def extract(
     text_or_documents: Union[str, List[str], data.Document, List[data.Document]],
     prompt_description: str,
     examples: List[data.ExampleData],
-    model_id: str = 'gemini-1.5-flash',
+    model_id: str = 'qwen-plus',
     api_key: Optional[str] = None,
     temperature: float = 0.3,
     fetch_urls: bool = False,
@@ -206,40 +205,26 @@ def extract(
                     processed.append(item)
             text_or_documents = processed
     
-    # Add temperature to kwargs if provider supports it
-    # Note: Core LangExtract may not support temperature directly,
-    # but we pass it through in case it does in future versions
-    if 'generation_config' not in kwargs:
-        kwargs['generation_config'] = {}
-    kwargs['generation_config']['temperature'] = temperature
+    # Pass temperature directly to core extract
+    # Core LangExtract supports temperature parameter
+    
+    # Get API key from config if not provided
+    if api_key is None:
+        from .config import get_config
+        config = get_config()
+        api_key = config.get_api_key()
     
     # Use core LangExtract extract with our enhancements
-    try:
-        result = lx.extract(
-            text_or_documents=text_or_documents,
-            prompt_description=prompt_description,
-            examples=examples,
-            model_id=model_id,
-            api_key=api_key,
-            **kwargs
-        )
-        return result
-        
-    except Exception as e:
-        # If core extract doesn't support our parameters, try without them
-        if 'generation_config' in str(e):
-            kwargs.pop('generation_config', None)
-            result = lx.extract(
-                text_or_documents=text_or_documents,
-                prompt_description=prompt_description,
-                examples=examples,
-                model_id=model_id,
-                api_key=api_key,
-                **kwargs
-            )
-            return result
-        else:
-            raise
+    result = lx.extract(
+        text_or_documents=text_or_documents,
+        prompt_description=prompt_description,
+        examples=examples,
+        model_id=model_id,
+        api_key=api_key,
+        temperature=temperature,
+        **kwargs
+    )
+    return result
 
 
 def extract_with_provider(
@@ -264,7 +249,7 @@ def extract_with_provider(
     """
     if provider is None:
         # Use default provider
-        provider = ProviderFactory.create_provider('gemini-1.5-flash')
+        provider = ProviderFactory.create_provider('qwen-plus')
     
     # Create extractor with provider
     extractor = EnhancedExtractor(provider=provider)

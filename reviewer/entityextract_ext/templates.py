@@ -70,14 +70,12 @@ class ExtractionTemplate:
     examples: List[data.ExampleData] = field(default_factory=list)
     
     # Model configuration
-    # Latest Gemini models (as of August 2025):
-    # - gemini-2.5-flash-thinking: Flash 2.5 with reasoning/thinking capabilities (RECOMMENDED)
-    # - gemini-2.5-flash: Standard Flash 2.5, faster without thinking
-    # - gemini-2.5-pro: Pro 2.5 for most complex tasks
-    # - gemini-2.0-flash-exp: Previous Flash 2.0 (deprecated)
-    # - gemini-1.5-flash-002: Older stable Flash (legacy)
-    # - gemini-1.5-pro-002: Older Pro model (legacy)
-    preferred_model: str = "gemini-2.5-flash-thinking"  # Using Flash 2.5 with thinking
+    # Qwen models from Alibaba Cloud DashScope:
+    # - qwen-plus: Advanced general-purpose model (RECOMMENDED)
+    # - qwen-turbo: Faster model for quick responses
+    # - qwen-max: Most powerful model for complex tasks
+    # - qwen-long: Optimized for long context understanding
+    preferred_model: str = "qwen-plus"  # Using Qwen Plus as default
     temperature: float = 0.3
     extraction_passes: int = 1
     
@@ -151,20 +149,19 @@ class ExtractionTemplate:
         generated_examples = []
         
         for field in self.fields[:3]:  # Use first 3 fields for examples
-            if field.examples:
-                example_text = field.examples[0] if field.examples else f"Sample {field.name}"
-                generated_examples.append(
-                    data.ExampleData(
-                        text=example_text,
-                        extractions=[
-                            data.Extraction(
-                                extraction_class=field.extraction_class,
-                                extraction_text=example_text,
-                                attributes=field.attributes
-                            )
-                        ]
-                    )
+            example_text = field.examples[0] if field.examples else f"Sample {field.name}"
+            generated_examples.append(
+                data.ExampleData(
+                    text=example_text,
+                    extractions=[
+                        data.Extraction(
+                            extraction_class=field.extraction_class,
+                            extraction_text=example_text,
+                            attributes=field.attributes
+                        )
+                    ]
                 )
+            )
         
         return generated_examples if generated_examples else []
     
@@ -242,7 +239,7 @@ class ExtractionTemplate:
             version=data.get('version', '1.0.0'),
             fields=fields,
             prompt_template=data.get('prompt_template'),
-            preferred_model=data.get('preferred_model', 'gemini-1.5-flash'),
+            preferred_model=data.get('preferred_model', 'qwen-plus'),
             temperature=data.get('temperature', 0.3),
             extraction_passes=data.get('extraction_passes', 1),
             pre_processing=data.get('pre_processing'),

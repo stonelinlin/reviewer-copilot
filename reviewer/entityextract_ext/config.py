@@ -23,16 +23,14 @@ class LangExtractConfig:
     Priority: Environment variables > Config file > Defaults
     """
     # Model settings
-    # Latest Gemini models as of August 2025:
-    # - gemini-2.5-flash-thinking: Flash 2.5 with reasoning/thinking capabilities (RECOMMENDED)
-    # - gemini-2.5-flash: Standard Flash 2.5, faster without thinking
-    # - gemini-2.5-pro: Pro 2.5 for most complex tasks
-    # - gemini-2.0-flash-exp: Previous Flash 2.0 (deprecated)
-    # - gemini-1.5-flash-002: Older stable Flash (legacy)
-    # - gemini-1.5-pro-002: Older Pro model (legacy)
-    default_model: str = "gemini-2.5-flash-thinking"  # Latest Flash with thinking capability
-    api_key: Optional[str] = None
-    api_key_env_var: str = "GOOGLE_API_KEY"  # Primary API key variable
+    # Qwen models from Alibaba Cloud DashScope:
+    # - qwen-plus: Advanced general-purpose model (RECOMMENDED)
+    # - qwen-turbo: Faster model for quick responses
+    # - qwen-max: Most powerful model for complex tasks
+    # - qwen-long: Optimized for long context understanding
+    default_model: str = "qwen-plus"  # Default Qwen model
+    api_key: Optional[str] = "sk-677242548d444be7ab177421fb87d5f6"  # Default API key
+    api_key_env_var: str = "QWEN_API_KEY"  # Primary API key variable
     
     # Extraction settings
     max_retries: int = 3
@@ -129,7 +127,7 @@ class LangExtractConfig:
     
     def _load_from_env(self):
         """Load settings from environment variables."""
-        # API key - only check GOOGLE_API_KEY
+        # API key - only check QWEN_API_KEY
         if not self.api_key:
             self.api_key = os.environ.get(self.api_key_env_var)
         
@@ -184,7 +182,7 @@ class LangExtractConfig:
     def get_api_key(self) -> Optional[str]:
         """
         Get API key from configuration or environment.
-        Only checks GOOGLE_API_KEY, not LANGEXTRACT_API_KEY.
+        Only checks QWEN_API_KEY, not LANGEXTRACT_API_KEY.
         
         Returns:
             API key or None if not found
@@ -248,7 +246,7 @@ def reset_config():
 def create_example_config(path: str = '.entity_extract.yaml'):
     """Create an example configuration file."""
     example_config = LangExtractConfig(
-        default_model="gemini-2.5-flash-thinking",
+        default_model="qwen-plus",
         max_retries=3,
         timeout=60,
         default_chunk_size=1500,

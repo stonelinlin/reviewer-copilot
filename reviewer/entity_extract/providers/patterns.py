@@ -28,8 +28,13 @@ OPENAI_PATTERNS = (
     r'^gpt4\.',
     r'^gpt-5',
     r'^gpt5\.',
+    # Qwen DashScope models (OpenAI-compatible API)
+    r'^qwen-plus',
+    r'^qwen-turbo',
+    r'^qwen-max',
+    r'^qwen-long',
 )
-OPENAI_PRIORITY = 10
+OPENAI_PRIORITY = 15  # Higher priority to match qwen-plus before ollama's qwen pattern
 
 # Ollama provider patterns
 OLLAMA_PATTERNS = (

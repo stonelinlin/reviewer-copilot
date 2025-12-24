@@ -35,17 +35,17 @@ class ProviderConfig(TypedDict):
 BUILTIN_PROVIDERS: list[ProviderConfig] = [
     {
         'patterns': patterns.GEMINI_PATTERNS,
-        'target': 'entity_extract.providers.gemini:GeminiLanguageModel',
+        'target': 'reviewer.entity_extract.providers.gemini:GeminiLanguageModel',
         'priority': patterns.GEMINI_PRIORITY,
     },
     {
         'patterns': patterns.OLLAMA_PATTERNS,
-        'target': 'entity_extract.providers.ollama:OllamaLanguageModel',
+        'target': 'reviewer.entity_extract.providers.ollama:OllamaLanguageModel',
         'priority': patterns.OLLAMA_PRIORITY,
     },
     {
         'patterns': patterns.OPENAI_PATTERNS,
-        'target': 'entity_extract.providers.openai:OpenAILanguageModel',
+        'target': 'reviewer.entity_extract.providers.openai:OpenAILanguageModel',
         'priority': patterns.OPENAI_PRIORITY,
     },
 ]

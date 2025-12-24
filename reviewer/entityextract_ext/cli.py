@@ -50,11 +50,11 @@ def cli():
 @click.option('--output', '-o', default='output.html', help='Output file (default: output.html)')
 @click.option('--format', '-f', type=click.Choice(['html', 'jsonl', 'csv', 'gif']), 
               default='html', help='Output format')
-@click.option('--model', '-m', default='gemini-2.5-flash-thinking', help='Model ID to use (default: Flash 2.5 with thinking)')
+@click.option('--model', '-m', default='qwen-plus', help='Model ID to use (default: Qwen Plus)')
 @click.option('--prompt', '-p', help='Extraction prompt description')
 @click.option('--template', help='Template ID or path to use for extraction')
 @click.option('--examples', '-e', help='Path to examples file (JSON/YAML)')
-@click.option('--api-key', '-k', envvar='GOOGLE_API_KEY', help='API key (or use GOOGLE_API_KEY env var)')
+@click.option('--api-key', '-k', envvar='QWEN_API_KEY', help='API key (or use QWEN_API_KEY env var)')
 @click.option('--temperature', '-t', default=0.3, type=float, help='Generation temperature (0.0-2.0)')
 @click.option('--fetch-urls', is_flag=True, help='Fetch content from URLs automatically')
 @click.option('--resolve-refs', is_flag=True, help='Resolve references and relationships')
@@ -85,7 +85,7 @@ def extract(input, output, format, model, prompt, template, examples, api_key, t
     
     # Set API key if provided
     if api_key:
-        os.environ['GOOGLE_API_KEY'] = api_key
+        os.environ['QWEN_API_KEY'] = api_key
     
     # Load examples if provided
     example_data = []
@@ -269,7 +269,7 @@ def extract(input, output, format, model, prompt, template, examples, api_key, t
 @click.option('--id-column', '-i', help='Column containing document IDs')
 @click.option('--output', '-o', default='batch_results.csv', help='Output CSV file')
 @click.option('--prompt', '-p', required=True, help='Extraction prompt')
-@click.option('--model', '-m', default='gemini-2.5-flash-thinking', help='Model ID (default: Flash 2.5 with thinking)')
+@click.option('--model', '-m', default='qwen-plus', help='Model ID (default: Qwen Plus)')
 @click.option('--max-rows', '-n', type=int, help='Maximum rows to process')
 @click.option('--examples', '-e', help='Path to examples file')
 def batch(csv, text_column, id_column, output, prompt, model, max_rows, examples):
@@ -330,7 +330,7 @@ def batch(csv, text_column, id_column, output, prompt, model, max_rows, examples
               default='custom', help='Multi-pass strategy')
 @click.option('--passes', '-p', help='Custom passes config (JSON/YAML)')
 @click.option('--output', '-o', default='multipass_results.html', help='Output file')
-@click.option('--model', '-m', default='gemini-2.5-flash-thinking', help='Model ID (default: Flash 2.5 with thinking)')
+@click.option('--model', '-m', default='qwen-plus', help='Model ID (default: Qwen Plus)')
 @click.option('--debug', is_flag=True, help='Enable debug output')
 def multipass(input, strategy, passes, output, model, debug):
     """
@@ -622,7 +622,7 @@ Example files have been created:
                 'examples': ['$100,000', '€50,000']
             }
         ],
-        'preferred_model': 'gemini-1.5-flash',
+        'preferred_model': 'qwen-plus',
         'temperature': 0.2,
         'tags': ['legal', 'contract', 'analysis'],
         'author': 'example',
@@ -917,7 +917,7 @@ def template_import(file_path, template_id):
             description=template_dict.get('description', ''),
             document_type=DocumentType(template_dict.get('document_type', 'custom')),
             fields=fields,
-            preferred_model=template_dict.get('preferred_model', 'gemini-1.5-flash'),
+            preferred_model=template_dict.get('preferred_model', 'qwen-plus'),
             temperature=template_dict.get('temperature', 0.3),
             tags=template_dict.get('tags', []),
             author=template_dict.get('author', 'imported'),

@@ -341,7 +341,7 @@ class TemplateWizard:
         # Model configuration
         click.echo("\nModel Configuration:")
         model = click.prompt("Preferred model", 
-                           default="gemini-1.5-flash")
+                           default="qwen-plus")
         temperature = click.prompt("Temperature (0.0-2.0)", 
                                  type=float, default=0.3)
         
@@ -541,14 +541,21 @@ def extract_with_template(
     model_id = kwargs.pop('model_id', None) or template.preferred_model
     temperature = kwargs.pop('temperature', None) or template.temperature
 
+    # Pass document as a list if it's a Document object
+    text_or_docs = [document] if isinstance(document, data.Document) else document
+    
     result = extract(
-        text_or_documents=document,
+        text_or_documents=text_or_docs,
         prompt_description=template.generate_prompt(),
         examples=template.generate_examples(),
         model_id=model_id,
         temperature=temperature,
         **kwargs
     )
+    
+    # If we passed a list, extract the single result
+    if isinstance(result, list) and len(result) == 1:
+        result = result[0]
     
     # Validate extractions if template has validation rules
     if result and result.extractions:

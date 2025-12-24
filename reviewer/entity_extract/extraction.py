@@ -37,7 +37,7 @@ def extract(
     text_or_documents: typing.Any,
     prompt_description: str | None = None,
     examples: typing.Sequence[typing.Any] | None = None,
-    model_id: str = "gemini-2.5-flash",
+    model_id: str = "qwen-plus",
     api_key: str | None = None,
     language_model_type: typing.Type[typing.Any] | None = None,
     format_type: typing.Any = None,

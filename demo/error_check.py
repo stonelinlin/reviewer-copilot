@@ -217,9 +217,9 @@ result = lx.extract(
     fence_output=True,
     use_schema_constraints=False,
     model=OpenAILanguageModel(
-        model_id='Qwen/Qwen3-Next-80B-A3B-Instruct',
-        base_url='https://api-inference.modelscope.cn/v1',
-        api_key='填入你的api',
+        model_id='qwen-plus',
+        base_url='https://dashscope.aliyuncs.com/compatible-mode/v1',
+        api_key='sk-677242548d444be7ab177421fb87d5f6',
         provider_kwargs={
             'connect_timeout': 60,
             'timeout': 120
