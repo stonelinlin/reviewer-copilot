@@ -6,12 +6,8 @@ import requests
 from bs4 import BeautifulSoup
 import PyPDF2
 import io
-import tempfile
-import os
 from typing import Optional
-from reviewer.entity_extract import data
-import google.generativeai as genai
-from urllib.parse import urlparse
+from reviewer.entity_extract.core import data
 
 
 def load_document_from_url(
@@ -67,15 +63,6 @@ def load_document_from_url(
     elif 'html' in content_type or 'text' in content_type:
         return _extract_html_text(response.text, document_id, url)
     
-    # Handle images (using Gemini vision)
-    elif 'image' in content_type:
-        return _extract_image_text(
-            response.content,
-            document_id,
-            url,
-            gemini_api_key
-        )
-    
     else:
         raise ValueError(f"Unsupported content type: {content_type}")
 
@@ -88,42 +75,7 @@ def _extract_pdf_from_response(
     gemini_api_key: Optional[str] = None
 ) -> data.Document:
     """Extract text from PDF content."""
-    
-    if use_gemini and gemini_api_key:
-        # Use Gemini for better extraction (handles scanned PDFs)
-        try:
-            if not gemini_api_key:
-                gemini_api_key = os.environ.get('GOOGLE_API_KEY')
-            
-            genai.configure(api_key=gemini_api_key)
-            
-            # Save PDF temporarily
-            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp:
-                tmp.write(pdf_content)
-                tmp_path = tmp.name
-            
-            try:
-                # Upload to Gemini
-                uploaded_file = genai.upload_file(tmp_path)
-                # Use latest Flash 2.5 with thinking capability
-                model = genai.GenerativeModel('gemini-2.5-flash-thinking')
-                
-                prompt = """Extract ALL text from this PDF document exactly as it appears. 
-                Preserve all formatting, line breaks, and structure. 
-                Do not summarize or omit anything."""
-                
-                response = model.generate_content([prompt, uploaded_file])
-                text = response.text
-                
-            finally:
-                os.unlink(tmp_path)
-                
-        except Exception as e:
-            print(f"Gemini extraction failed, falling back to PyPDF2: {e}")
-            text = _extract_with_pypdf2(pdf_content)
-    else:
-        # Use PyPDF2
-        text = _extract_with_pypdf2(pdf_content)
+    text = _extract_with_pypdf2(pdf_content)
     
     doc = data.Document(
         text=text,
@@ -172,55 +124,6 @@ def _extract_html_text(html_content: str, document_id: str, url: str) -> data.Do
             'source_url': url,
             'content_type': 'text/html',
             'title': title_text
-        }
-    return doc
-
-
-def _extract_image_text(
-    image_content: bytes,
-    document_id: str,
-    url: str,
-    gemini_api_key: Optional[str] = None
-) -> data.Document:
-    """Extract text from image using Gemini vision."""
-    
-    if not gemini_api_key:
-        gemini_api_key = os.environ.get('GOOGLE_API_KEY')
-    
-    if not gemini_api_key:
-        raise ValueError("Gemini API key required for image text extraction. Set GOOGLE_API_KEY environment variable")
-    
-    genai.configure(api_key=gemini_api_key)
-    
-    # Save image temporarily
-    ext = urlparse(url).path.split('.')[-1] or 'jpg'
-    with tempfile.NamedTemporaryFile(suffix=f'.{ext}', delete=False) as tmp:
-        tmp.write(image_content)
-        tmp_path = tmp.name
-    
-    try:
-        # Upload to Gemini
-        uploaded_file = genai.upload_file(tmp_path)
-        # Use latest Flash 2.5 with thinking capability
-        model = genai.GenerativeModel('gemini-2.5-flash-thinking')
-        
-        prompt = """Extract ALL text from this image. 
-        Include any text visible in the image, preserving layout where possible."""
-        
-        response = model.generate_content([prompt, uploaded_file])
-        text = response.text
-        
-    finally:
-        os.unlink(tmp_path)
-    
-    doc = data.Document(
-        text=text,
-        document_id=document_id
-    )
-    doc._metadata = {
-            'source_url': url,
-            'content_type': 'image',
-            'extraction_method': 'gemini_vision'
         }
     return doc
 

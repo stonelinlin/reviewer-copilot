@@ -9,22 +9,13 @@ import json
 import yaml
 import mimetypes
 import PyPDF2
-from typing import Optional
 import reviewer.entity_extract as lx
-from reviewer.entity_extract import data
+from reviewer.entity_extract.core import data
 from . import (
     load_document_from_url, 
-    load_documents_from_csv,
-    export_to_gif,
-    create_simple_gif,
     multi_pass_extract,
     MultiPassStrategies,
-    extract as enhanced_extract,
-    ReferenceResolver,
-    RelationshipResolver,
     ExtractionAnnotator,
-    list_providers,
-    list_patterns
 )
 from .templates import (
     TemplateManager,
@@ -60,7 +51,7 @@ def cli():
 @click.option('--resolve-refs', is_flag=True, help='Resolve references and relationships')
 @click.option('--annotate', is_flag=True, help='Add quality annotations')
 @click.option('--debug', is_flag=True, help='Enable debug output')
-def extract(input, output, format, model, prompt, template, examples, api_key, temperature, fetch_urls, resolve_refs, annotate, debug):
+def extract(input, output, format, prompt, template, examples, api_key, temperature, fetch_urls, annotate, debug):
     """
     Extract information from a document.
     
@@ -155,7 +146,7 @@ def extract(input, output, format, model, prompt, template, examples, api_key, t
         sys.exit(1)
     
     # Perform extraction with new features
-    click.echo(f"Extracting with model: {model} (temperature: {temperature})")
+    click.echo(f"Extracting with model (temperature: {temperature})")
     try:
         # Use template if provided
         if template:
@@ -163,18 +154,16 @@ def extract(input, output, format, model, prompt, template, examples, api_key, t
             result = extract_with_template(
                 document=doc,
                 template=template,
-                model_id=model,
                 temperature=temperature,
                 api_key=api_key,
                 debug=debug
             )
         # Use enhanced extract if URL fetching or temperature is specified
         elif fetch_urls or temperature != 0.3:
-            result = enhanced_extract(
+            result = lx.extract(
                 text_or_documents=doc,
                 prompt_description=prompt,
                 examples=example_data,
-                model_id=model,
                 temperature=temperature,
                 fetch_urls=fetch_urls,
                 api_key=api_key,
@@ -185,22 +174,10 @@ def extract(input, output, format, model, prompt, template, examples, api_key, t
                 text_or_documents=doc,
                 prompt_description=prompt,
                 examples=example_data,
-                model_id=model,
                 api_key=api_key,
                 debug=debug
             )
-        
-        # Apply resolver if requested
-        if resolve_refs and result.extractions:
-            click.echo("Resolving references...")
-            resolver = ReferenceResolver()
-            result.extractions = resolver.resolve_references(result.extractions, result.text)
-            
-            rel_resolver = RelationshipResolver()
-            relationships = rel_resolver.resolve_relationships(result.extractions, result.text)
-            if relationships:
-                click.echo(f"Found {len(relationships)} relationships")
-        
+
         # Apply annotations if requested
         if annotate and result.extractions:
             click.echo("Adding annotations...")
@@ -233,22 +210,6 @@ def extract(input, output, format, model, prompt, template, examples, api_key, t
         elif format == 'jsonl':
             lx.io.save_annotated_documents([result], output_name=output)
             click.echo(f"✓ Saved JSONL: {output}")
-            
-        elif format == 'csv':
-            from .csv_loader import save_extractions_to_csv
-            save_extractions_to_csv([result], output)
-            click.echo(f"✓ Saved CSV: {output}")
-            
-        elif format == 'gif':
-            # Save JSONL first
-            root, _ = os.path.splitext(output)
-            jsonl_path = root + '.jsonl'
-            lx.io.save_annotated_documents([result], output_name=jsonl_path)
-            # Create GIF
-            gif_path = root + '.gif'
-            create_simple_gif(jsonl_path, gif_path)
-            click.echo(f"✓ Created GIF: {gif_path}")
-            
     except Exception as e:
         click.echo(f"Error saving output: {e}", err=True)
         sys.exit(1)
@@ -262,65 +223,6 @@ def extract(input, output, format, model, prompt, template, examples, api_key, t
     for class_name, count in sorted(by_class.items()):
         click.echo(f"  {class_name}: {count}")
 
-
-@cli.command()
-@click.option('--csv', '-c', required=True, help='Input CSV file')
-@click.option('--text-column', '-t', required=True, help='Column containing text')
-@click.option('--id-column', '-i', help='Column containing document IDs')
-@click.option('--output', '-o', default='batch_results.csv', help='Output CSV file')
-@click.option('--prompt', '-p', required=True, help='Extraction prompt')
-@click.option('--model', '-m', default='qwen-plus', help='Model ID (default: Qwen Plus)')
-@click.option('--max-rows', '-n', type=int, help='Maximum rows to process')
-@click.option('--examples', '-e', help='Path to examples file')
-def batch(csv, text_column, id_column, output, prompt, model, max_rows, examples):
-    """
-    Process a batch of documents from CSV.
-    
-    Example:
-        entity_extract batch -c reviews.csv -t review_text -p "Extract product names and sentiment"
-    """
-    # Load examples
-    example_data = []
-    if examples:
-        # (Same loading logic as extract command)
-        try:
-            with open(examples, 'r') as f:
-                if examples.endswith('.yaml') or examples.endswith('.yml'):
-                    examples_dict = yaml.safe_load(f)
-                else:
-                    examples_dict = json.load(f)
-
-            # Convert to ExampleData objects
-            for ex in examples_dict.get('examples', []):
-                extractions = []
-                for ext in ex.get('extractions', []):
-                    extractions.append(data.Extraction(
-                        extraction_class=ext['class'],
-                        extraction_text=ext['text'],
-                        attributes=ext.get('attributes')
-                    ))
-                example_data.append(data.ExampleData(
-                    text=ex['text'],
-                    extractions=extractions
-                ))
-        except Exception as e:
-            click.echo(f"Error loading examples: {e}", err=True)
-            sys.exit(1)
-    
-    try:
-        from .csv_loader import process_csv_batch
-        process_csv_batch(
-            csv,
-            text_column,
-            prompt,
-            example_data,
-            output,
-            model_id=model,
-            max_rows=max_rows
-        )
-    except Exception as e:
-        click.echo(f"Batch processing error: {e}", err=True)
-        sys.exit(1)
 
 
 @cli.command()
@@ -374,7 +276,6 @@ def multipass(input, strategy, passes, output, model, debug):
         result = multi_pass_extract(
             text,
             passes_config,
-            model_id=model,
             debug=debug
         )
         
@@ -399,96 +300,6 @@ def multipass(input, strategy, passes, output, model, debug):
         click.echo(f"Multi-pass error: {e}", err=True)
         sys.exit(1)
 
-
-@cli.command()
-@click.option('--jsonl', '-j', required=True, help='Input JSONL file')
-@click.option('--output', '-o', default='visualization.html', help='Output file')
-@click.option('--format', '-f', 
-              type=click.Choice(['html', 'gif', 'frames']),
-              default='html', help='Output format')
-@click.option('--template', '-t',
-              type=click.Choice(['standard', 'dark', 'minimal', 'compact']),
-              default='standard', help='HTML template style')
-def visualize(jsonl, output, format, template):
-    """
-    Create visualization from JSONL file.
-    
-    Examples:
-        # Create HTML with default template
-        entity_extract visualize -j results.jsonl -o viz.html
-        
-        # Create HTML with dark mode template
-        entity_extract visualize -j results.jsonl -o viz.html -t dark
-        
-        # Create GIF
-        entity_extract visualize -j results.jsonl -f gif -o animation.gif
-    """
-    try:
-        if format == 'html':
-            if template == 'standard':
-                html = lx.visualize(jsonl)
-            else:
-                from .custom_visualization import (
-                    visualize_with_template,
-                    DarkModeTemplate,
-                    MinimalTemplate,
-                    CompactTemplate
-                )
-                
-                template_map = {
-                    'dark': DarkModeTemplate(),
-                    'minimal': MinimalTemplate(),
-                    'compact': CompactTemplate()
-                }
-                
-                html = visualize_with_template(jsonl, template=template_map[template])
-            
-            with open(output, 'w') as f:
-                f.write(html)
-            click.echo(f"✓ Created HTML ({template} template): {output}")
-            
-        elif format == 'gif':
-            create_simple_gif(jsonl, output)
-            click.echo(f"✓ Created GIF: {output}")
-            
-        elif format == 'frames':
-            from .gif_export import export_to_html_frames
-            frames = export_to_html_frames(jsonl, output)
-            click.echo(f"✓ Created {len(frames)} frames in: {output}/")
-            
-    except Exception as e:
-        click.echo(f"Visualization error: {e}", err=True)
-        sys.exit(1)
-
-
-@cli.command()
-def providers():
-    """List available providers and supported models."""
-    click.echo("Available Providers")
-    click.echo("==================\n")
-    
-    # List providers
-    providers = list_providers()
-    for name, provider_class in providers.items():
-        click.echo(f"• {name}")
-        if hasattr(provider_class, 'get_supported_models'):
-            models = provider_class.get_supported_models()
-            if models:
-                for model in models[:5]:  # Show first 5 models
-                    click.echo(f"  - {model}")
-                if len(models) > 5:
-                    click.echo(f"  ... and {len(models)-5} more")
-        click.echo()
-    
-    # List patterns
-    click.echo("\nModel ID Patterns")
-    click.echo("=================\n")
-    patterns = list_patterns()
-    for pattern in patterns:
-        click.echo(f"• {pattern}")
-    
-    click.echo("\nTo use a provider, specify the model ID with -m flag:")
-    click.echo("entity_extract extract -i doc.txt -p 'Extract data' -m gemini-1.5-flash")
 
 
 @cli.command()

@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 import re
 
-from reviewer.entity_extract import data
+from reviewer.entity_extract.core import data
 
 
 class AnnotationType(str, Enum):
@@ -51,7 +51,7 @@ class ConfidenceLevel(str, Enum):
 
 
 @dataclass
-class Annotation:
+class QualityAnnotation:
     """Represents an annotation on extracted data."""
 
     annotation_type: AnnotationType
@@ -510,7 +510,7 @@ class ExtractionAnnotator:
         self.include_timestamps = include_timestamps
         self.quality_scorer = QualityScorer()
         self.verifier = ExtractionVerifier()
-        self.annotations: List[Annotation] = []
+        self.annotations: List[QualityAnnotation] = []
         self._annotation_counter = 0
         self._fallback_ids: Dict[int, str] = {}
     
@@ -520,7 +520,7 @@ class ExtractionAnnotator:
         text: str,
         all_extractions: Optional[List[data.Extraction]] = None,
         external_data: Optional[Dict[str, Any]] = None
-    ) -> List[Annotation]:
+    ) -> List[QualityAnnotation]:
         """
         Add comprehensive annotations to an extraction.
         
@@ -533,7 +533,7 @@ class ExtractionAnnotator:
         Returns:
             List of annotations added
         """
-        annotations: List[Annotation] = []
+        annotations: List[QualityAnnotation] = []
 
         quality_ann = self.annotate_quality(extraction, text, all_extractions)
         annotations.append(quality_ann)
@@ -572,7 +572,7 @@ class ExtractionAnnotator:
         extraction: data.Extraction,
         text: str,
         all_extractions: Optional[List[data.Extraction]] = None
-    ) -> Annotation:
+    ) -> QualityAnnotation:
         """Add quality annotation to an extraction."""
         factor_scores = self.quality_scorer._compute_factor_scores(
             extraction, text, all_extractions
@@ -604,7 +604,7 @@ class ExtractionAnnotator:
         self,
         extraction: data.Extraction,
         external_data: Optional[Dict[str, Any]] = None
-    ) -> Annotation:
+    ) -> QualityAnnotation:
         """Add verification annotation to an extraction."""
         is_valid, message, confidence = self.verifier.verify_extraction(extraction, external_data)
 
@@ -629,11 +629,11 @@ class ExtractionAnnotator:
     def annotate_warnings(
         self,
         extraction: data.Extraction,
-        verification: Optional[Annotation] = None,
-    ) -> List[Annotation]:
+        verification: Optional[QualityAnnotation] = None,
+    ) -> List[QualityAnnotation]:
         """Add warning annotations for potential issues."""
 
-        warnings: List[Annotation] = []
+        warnings: List[QualityAnnotation] = []
         text_value = extraction.extraction_text or ""
         extraction_id = getattr(extraction, "extraction_id", None)
 
@@ -698,7 +698,7 @@ class ExtractionAnnotator:
     def annotate_relationships(
         self,
         relationships: List[Any]  # From resolver module
-    ) -> List[Annotation]:
+    ) -> List[QualityAnnotation]:
         """Add annotations for discovered relationships."""
         annotations = []
 
@@ -722,7 +722,7 @@ class ExtractionAnnotator:
 
         return annotations
     
-    def get_annotations_for_extraction(self, extraction_id: str) -> List[Annotation]:
+    def get_annotations_for_extraction(self, extraction_id: str) -> List[QualityAnnotation]:
         """Get all annotations for a specific extraction."""
         return [a for a in self.annotations if a.extraction_id == extraction_id]
     
@@ -756,7 +756,7 @@ class ExtractionAnnotator:
         extraction_id: Optional[str] = None,
         confidence: Optional[Union[float, ConfidenceLevel]] = None,
         metadata: Optional[Dict[str, Any]] = None,
-    ) -> Annotation:
+    ) -> QualityAnnotation:
         resolved_id = extraction_id
 
         if resolved_id is None and extraction is not None:
@@ -774,7 +774,7 @@ class ExtractionAnnotator:
         if resolved_id != "":
             resolved_id = str(resolved_id)
 
-        annotation = Annotation(
+        annotation = QualityAnnotation(
             annotation_id=self._get_next_id(),
             extraction_id=resolved_id,
             annotation_type=annotation_type,
@@ -793,8 +793,7 @@ class ExtractionAnnotator:
         return f"ann_{self._annotation_counter:04d}"
 
 
-__all__ = [
-    'Annotation',
+__all__ = ['QualityAnnotation',
     'AnnotationType',
     'ConfidenceLevel',
     'QualityScorer',

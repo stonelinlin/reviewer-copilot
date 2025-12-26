@@ -34,9 +34,6 @@ __all__ = [
     # Submodules exposed lazily on attribute access for ergonomics:
     "annotation",
     "data",
-    "providers",
-    "schema",
-    "inference",
     "factory",
     "resolver",
     "prompting",
@@ -44,7 +41,6 @@ __all__ = [
     "visualization",
     "exceptions",
     "core",
-    "plugins",
 ]
 
 _CACHE: Dict[str, Any] = {}
@@ -64,23 +60,17 @@ def visualize(*args: Any, **kwargs: Any):
 _LAZY_MODULES = {
     "annotation": "reviewer.entity_extract.annotation",
     "chunking": "reviewer.entity_extract.chunking",
-    "data": "reviewer.entity_extract.data",
     "data_lib": "reviewer.entity_extract.data_lib",
     "debug_utils": "reviewer.entity_extract.core.debug_utils",
     "exceptions": "reviewer.entity_extract.exceptions",
     "factory": "reviewer.entity_extract.factory",
-    "inference": "reviewer.entity_extract.inference",
     "io": "reviewer.entity_extract.io",
     "progress": "reviewer.entity_extract.progress",
     "prompting": "reviewer.entity_extract.prompting",
     "providers": "reviewer.entity_extract.providers",
     "resolver": "reviewer.entity_extract.resolver",
-    "schema": "reviewer.entity_extract.schema",
-    "tokenizer": "reviewer.entity_extract.tokenizer",
     "visualization": "reviewer.entity_extract.visualization",
     "core": "reviewer.entity_extract.core",
-    "plugins": "reviewer.entity_extract.plugins",
-    "registry": "reviewer.entity_extract.registry",  # Backward compat - will emit warning
 }
 
 

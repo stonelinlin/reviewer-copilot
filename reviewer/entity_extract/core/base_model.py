@@ -22,7 +22,6 @@ from typing import Any, Mapping
 
 import yaml
 
-from reviewer.entity_extract.core import schema
 from reviewer.entity_extract.core import types
 
 __all__ = ['BaseLanguageModel']
@@ -35,7 +34,7 @@ class BaseLanguageModel(abc.ABC):
     _constraint: A `Constraint` object specifying constraints for model output.
   """
 
-  def __init__(self, constraint: types.Constraint | None = None, **kwargs: Any):
+  def __init__(self, **kwargs: Any):
     """Initializes the BaseLanguageModel with an optional constraint.
 
     Args:
@@ -43,8 +42,7 @@ class BaseLanguageModel(abc.ABC):
         constraint.
       **kwargs: Additional keyword arguments passed to the model.
     """
-    self._constraint = constraint or types.Constraint()
-    self._schema: schema.BaseSchema | None = None
+    self._constraint = None
     self._fence_output_override: bool | None = None
     self._extra_kwargs: dict[str, Any] = kwargs.copy()
 
@@ -62,7 +60,7 @@ class BaseLanguageModel(abc.ABC):
     Args:
       schema_instance: The schema instance to apply, or None to clear.
     """
-    self._schema = schema_instance
+    self._schema = None
 
   @property
   def schema(self) -> schema.BaseSchema | None:
@@ -71,7 +69,7 @@ class BaseLanguageModel(abc.ABC):
     Returns:
       The schema instance or None if no schema is applied.
     """
-    return self._schema
+    return None
 
   def set_fence_output(self, fence_output: bool | None) -> None:
     """Set explicit fence output preference.

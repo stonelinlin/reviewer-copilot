@@ -4,13 +4,12 @@ Multi-pass extraction functionality for improved recall
 
 from typing import List, Dict, Any, Optional
 import reviewer.entity_extract as lx
-from reviewer.entity_extract import data
+from reviewer.entity_extract.core import data
 
 
 def multi_pass_extract(
     text: str,
     passes: List[Dict[str, Any]],
-    model_id: str = "gemini-1.5-flash",
     merge_overlapping: bool = False,
     debug: bool = False
 ) -> data.AnnotatedDocument:
@@ -74,13 +73,16 @@ def multi_pass_extract(
         
         # Perform extraction
         try:
+            # 使用固定的 Qwen 模型（简化后的 API）
+            from reviewer.entity_extract.factory import get_model
+            model = get_model()
+            
             result = lx.extract(
                 text_or_documents=text,
                 prompt_description=prompt,
                 examples=pass_config.get('examples', []),
-                model_id=model_id,
+                model=model,
                 additional_context=additional_context,
-                debug=False  # Suppress individual pass debug output
             )
             
             # Filter by focus classes if specified

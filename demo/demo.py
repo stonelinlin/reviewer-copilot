@@ -12,10 +12,10 @@ import html
 import json
 import re  # 用于文本清理
 import unicodedata  # 用于 Unicode 规范化
-from reviewer.entity_extract import data
-from reviewer.entity_extract.providers.openai import OpenAILanguageModel
+from reviewer.entity_extract.core import data
+from reviewer.entity_extract.openai import OpenAILanguageModel
 from reviewer.entity_extract.core.tokenizer import UnicodeTokenizer
-from reviewer.entityextract_ext.template_builder import extract_with_template
+from reviewer.entity_extract.ext.template_builder import extract_with_template
 
 # 读取PDF文件
 input_file = 'resume.pdf'

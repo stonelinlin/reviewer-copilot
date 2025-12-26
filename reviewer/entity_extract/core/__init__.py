@@ -25,7 +25,6 @@ __all__ = [
     "base_model",
     "types",
     "exceptions",
-    "schema",
     "data",
     "tokenizer",
 ]

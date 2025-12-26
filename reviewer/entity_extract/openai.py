@@ -1,19 +1,4 @@
-# Copyright 2025 Google LLC.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
-"""OpenAI provider for LangExtract."""
-# pylint: disable=duplicate-code
 
 from __future__ import annotations
 
@@ -24,16 +9,9 @@ from typing import Any, Iterator, Sequence
 from reviewer.entity_extract.core import base_model
 from reviewer.entity_extract.core import data
 from reviewer.entity_extract.core import exceptions
-from reviewer.entity_extract.core import schema
 from reviewer.entity_extract.core import types as core_types
-from reviewer.entity_extract.providers import patterns
-from reviewer.entity_extract.providers import router
 
 
-@router.register(
-    *patterns.OPENAI_PATTERNS,
-    priority=patterns.OPENAI_PRIORITY,
-)
 @dataclasses.dataclass(init=False)
 class OpenAILanguageModel(base_model.BaseLanguageModel):
   """Language model inference using OpenAI's API with structured output."""
@@ -110,7 +88,6 @@ class OpenAILanguageModel(base_model.BaseLanguageModel):
     )
 
     super().__init__(
-        constraint=schema.Constraint(constraint_type=schema.ConstraintType.NONE)
     )
     self._extra_kwargs = kwargs or {}
 

@@ -11,7 +11,7 @@ sys.path.insert(0, project_root)
 
 import reviewer.entity_extract as lx
 from reviewer.entity_extract import factory
-from reviewer.entity_extract.providers.openai import OpenAILanguageModel
+from reviewer.entity_extract.openai import OpenAILanguageModel
 from docx import Document
 
 # 从命令行参数获取文件名

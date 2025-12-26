@@ -1,17 +1,3 @@
-# Copyright 2025 Google LLC.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 """Library for resolving LLM output.
 
 In the context of this module, a "resolver" is a component designed to parse and
@@ -34,7 +20,6 @@ from absl import logging
 from reviewer.entity_extract.core import data
 from reviewer.entity_extract.core import exceptions
 from reviewer.entity_extract.core import format_handler as fh
-from reviewer.entity_extract.core import schema
 from reviewer.entity_extract.core import tokenizer as tokenizer_lib
 
 _FUZZY_ALIGNMENT_MIN_THRESHOLD = 0.75
@@ -57,7 +42,6 @@ class AbstractResolver(abc.ABC):
   def __init__(
       self,
       fence_output: bool = True,
-      constraint: schema.Constraint = schema.Constraint(),
       format_type: data.FormatType = data.FormatType.JSON,
   ):
     """Initializes the BaseResolver.
@@ -76,7 +60,7 @@ class AbstractResolver(abc.ABC):
       format_type: The format type for the output (JSON or YAML).
     """
     self._fence_output = fence_output
-    self._constraint = constraint
+    # self._constraint = constraint
     self._format_type = format_type
 
   @property
@@ -221,11 +205,9 @@ class Resolver(AbstractResolver):
           f"got an unexpected keyword argument '{list(kwargs.keys())[0]}'"
       )
 
-    constraint = constraint or schema.Constraint()
     super().__init__(
         fence_output=format_handler.use_fences,
         format_type=format_handler.format_type,
-        constraint=constraint,
     )
     self.format_handler = format_handler
     self.extraction_index_suffix = extraction_index_suffix
@@ -255,8 +237,9 @@ class Resolver(AbstractResolver):
     logging.debug("Input Text: %s", input_text)
 
     try:
-      constraint = getattr(self, "_constraint", schema.Constraint())
-      strict = getattr(constraint, "strict", False)
+      # constraint = getattr(self, "_constraint", schema.Constraint())
+      # strict = getattr(constraint, "strict", False)
+      strict = False
       extraction_data = self.format_handler.parse_output(
           input_text, strict=strict
       )
@@ -369,8 +352,8 @@ class Resolver(AbstractResolver):
       raise ValueError("Input string must be a non-empty string.")
 
     try:
-      constraint = getattr(self, "_constraint", schema.Constraint())
-      strict = getattr(constraint, "strict", False)
+      # constraint = getattr(self, "_constraint", schema.Constraint())
+      strict = False
       return self.format_handler.parse_output(input_string, strict=strict)
 
     except exceptions.FormatError as e:

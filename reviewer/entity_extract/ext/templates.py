@@ -14,7 +14,7 @@ from dataclasses import dataclass, field, asdict
 from datetime import datetime
 from enum import Enum
 
-from reviewer.entity_extract import data
+from reviewer.entity_extract.core import data
 
 
 class DocumentType(Enum):

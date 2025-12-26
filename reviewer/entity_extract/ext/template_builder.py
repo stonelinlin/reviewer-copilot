@@ -14,7 +14,7 @@ from pathlib import Path
 from collections.abc import Iterable, Mapping
 import click
 
-from reviewer.entity_extract import data
+from reviewer.entity_extract.core import data
 import reviewer.entity_extract as lx
 
 from .templates import (
@@ -23,7 +23,7 @@ from .templates import (
     DocumentType,
     TemplateManager
 )
-from .extraction import extract
+# from .extraction import extract
 
 
 class TemplateBuilder:
@@ -280,7 +280,7 @@ class TemplateBuilder:
         """
         try:
             # Test extraction with current template
-            result = extract(
+            result = lx.extract(
                 text_or_documents=test_document,
                 prompt_description=template.generate_prompt(),
                 examples=template.generate_examples(),
@@ -538,17 +538,15 @@ def extract_with_template(
         document = data.Document(text=document)
     
     # Extract using template
-    model_id = kwargs.pop('model_id', None) or template.preferred_model
     temperature = kwargs.pop('temperature', None) or template.temperature
 
     # Pass document as a list if it's a Document object
     text_or_docs = [document] if isinstance(document, data.Document) else document
     
-    result = extract(
+    result = lx.extract(
         text_or_documents=text_or_docs,
         prompt_description=template.generate_prompt(),
         examples=template.generate_examples(),
-        model_id=model_id,
         temperature=temperature,
         **kwargs
     )
